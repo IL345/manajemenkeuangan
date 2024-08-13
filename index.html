@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 10px 0;
+    text-align: center;
+}
+
+main {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+form label {
+    margin: 10px 0 5px;
+}
+
+form input, form select, form button {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+form button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #0056b3;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+table th {
+    background-color: #333;
+    color: #fff;
+}
+
+table td button {
+    background-color: #007bff;
+    border: none;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+table td button.edit {
+    background-color: #28a745;
+}
+
+table td button.delete {
+    background-color: #dc3545;
+}
+
+table td button:hover {
+    opacity: 0.8;
+}
+
+#summary-section {
+    margin-top: 20px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #333;
+    color: #fff;
+}
+
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Keuangan</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Manajemen Keuangan</h1>
+    </header>
+    
+    <main>
+        <section id="form-section">
+            <h2>Tambah/Edit Transaksi</h2>
+            <form id="transaction-form">
+                <input type="hidden" id="transaction-id">
+                <label for="transaction-description">Deskripsi:</label>
+                <input type="text" id="transaction-description" name="transaction-description" required>
+                
+                <label for="transaction-amount">Jumlah:</label>
+                <input type="number" id="transaction-amount" name="transaction-amount" required>
+                
+                <label for="transaction-type">Jenis:</label>
+                <select id="transaction-type" name="transaction-type" required>
+                    <option value="income">Pemasukan</option>
+                    <option value="expense">Pengeluaran</option>
+                </select>
+                
+                <button type="submit">Simpan Transaksi</button>
+            </form>
+        </section>
+        
+        <section id="list-section">
+            <h2>Daftar Transaksi</h2>
+            <table id="transaction-table">
+                <thead>
+                    <tr>
+                        <th>Deskripsi</th>
+                        <th>Jumlah</th>
+                        <th>Jenis</th>
+                        <th>Edit</th>
+                        <th>Hapus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data transaksi akan ditambahkan di sini -->
+                </tbody>
+            </table>
+        </section>
+        
+        <section id="summary-section">
+            <h2>Ringkasan</h2>
+            <p>Total Pemasukan: <span id="total-income">0</span></p>
+            <p>Total Pengeluaran: <span id="total-expense">0</span></p>
+            <p>Saldo: <span id="balance">0</span></p>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2024 Manajemen Keuangan. Semua hak cipta dilindungi.</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('transaction-form');
+    const tableBody = document.getElementById('transaction-table').getElementsByTagName('tbody')[0];
+    const totalIncomeElement = document.getElementById('total-income');
+    const totalExpenseElement = document.getElementById('total-expense');
+    const balanceElement = document.getElementById('balance');
+
+    let editingTransactionId = null;
+    let transactions = [];
+
+    function updateSummary() {
+        const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + parseFloat(t.amount), 0);
+        const expense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + parseFloat(t.amount), 0);
+        const balance = income - expense;
+
+        totalIncomeElement.textContent = income.toFixed(2);
+        totalExpenseElement.textContent = expense.toFixed(2);
+        balanceElement.textContent = balance.toFixed(2);
+    }
+
+    function renderTransactions() {
+        tableBody.innerHTML = '';
+        transactions.forEach(transaction => {
+            const row = tableBody.insertRow();
+            row.setAttribute('data-id', transaction.id);
+
+            row.insertCell(0).textContent = transaction.description;
+            row.insertCell(1).textContent = transaction.amount;
+            row.insertCell(2).textContent = transaction.type;
+
+            const editButton = document.createElement('button');
+            editButton.textContent = 'Edit';
+            editButton.classList.add('edit');
+            editButton.addEventListener('click', () => {
+                document.getElementById('transaction-id').value = transaction.id;
+                document.getElementById('transaction-description').value = transaction.description;
+                document.getElementById('transaction-amount').value = transaction.amount;
+                document.getElementById('transaction-type').value = transaction.type;
+                editingTransactionId = transaction.id;
+            });
+            row.insertCell(3).appendChild(editButton);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Hapus';
+            deleteButton.classList.add('delete');
+            deleteButton.addEventListener('click', () => {
+                transactions = transactions.filter(t => t.id !== transaction.id);
+                renderTransactions();
+                updateSummary();
+            });
+            row.insertCell(4).appendChild(deleteButton);
+        });
+    }
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        
+        const id = document.getElementById('transaction-id').value || Date.now().toString();
+        const description = document.getElementById('transaction-description').value;
+        const amount = document.getElementById('transaction-amount').value;
+        const type = document.getElementById('transaction-type').value;
+        
+        if (editingTransactionId) {
+            transactions = transactions.map(t => t.id === editingTransactionId ? { id, description, amount, type } : t);
+            editingTransactionId = null;
+        } else {
+            transactions.push({ id, description, amount, type });
+        }
+
+        form.reset();
+        renderTransactions();
+        updateSummary();
+    });
+
+    // Initial render
+    renderTransactions();
+    updateSummary();
+});
+
+    </script>
+</body>
+</html>
